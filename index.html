@@ -12,14 +12,8 @@
         
         <!-- Filtering and Sorting Controls -->
         <div class="controls">
-            <select id="filter-genre">
-                <option value="">All Genres</option>
-                <option value="Fiction">Fiction</option>
-                <option value="Science Fiction">Science Fiction</option>
-                <option value="Fantasy">Fantasy</option>
-                <option value="Mystery">Mystery</option>
-            </select>
-            
+            <input type="text" id="search-genre" placeholder="Search by Genre" />
+            <input type="text" id="search-author" placeholder="Search by Author" />
             <div>
                 <button id="sort-title">Sort by Title</button>
                 <button id="sort-author">Sort by Author</button>
@@ -40,32 +34,25 @@
         document.addEventListener('DOMContentLoaded', function() {
             const bookList = document.getElementById('book-list');
             const errorMessage = document.getElementById('error-message');
-            const filterGenre = document.getElementById('filter-genre');
+            const searchGenre = document.getElementById('search-genre');
+            const searchAuthor = document.getElementById('search-author');
             const sortTitleButton = document.getElementById('sort-title');
             const sortAuthorButton = document.getElementById('sort-author');
             const pagination = document.getElementById('pagination');
 
-            // Embedded JSON Data
-            const books = [
-                { "title": "The Great Adventure", "author": "John Smith", "genre": "Fiction" },
-                { "title": "Mystery of the Lost City", "author": "Jane Doe", "genre": "Mystery" },
-                { "title": "Journey to the Stars", "author": "Alice Johnson", "genre": "Science Fiction" },
-                { "title": "The Fantasy Realm", "author": "Bob Williams", "genre": "Fantasy" },
-                { "title": "Secrets of the Universe", "author": "Cathy Brown", "genre": "Science Fiction" },
-                { "title": "Into the Unknown", "author": "Tom Clark", "genre": "Science Fiction" },
-                { "title": "The Hidden World", "author": "Emily Davis", "genre": "Fantasy" },
-                { "title": "Enigma of the Ancient", "author": "Michael Lee", "genre": "Mystery" },
-                { "title": "The Last Horizon", "author": "Sarah Miller", "genre": "Fiction" },
-                { "title": "Chronicles of Magic", "author": "David Wilson", "genre": "Fantasy" },
-                { "title": "Galactic Odyssey", "author": "Laura Martinez", "genre": "Science Fiction" },
-                { "title": "The Enchanted Forest", "author": "Chris Anderson", "genre": "Fantasy" },
-                { "title": "Lost in Time", "author": "Jessica Robinson", "genre": "Science Fiction" },
-                { "title": "The Secret Keeper", "author": "Daniel White", "genre": "Mystery" },
-                { "title": "Echoes of the Past", "author": "Nancy Lewis", "genre": "Mystery" }
-            ];
-
             let currentPage = 1;
-            const booksPerPage = 5;
+            const booksPerPage = 8;
+            let books = [];
+
+            fetch('books.json')
+                .then(response => response.json())
+                .then(data => {
+                    books = data;
+                    updatePagination();
+                })
+                .catch(error => {
+                    errorMessage.textContent = 'Error loading book data: ' + error.message;
+                });
 
             // Display books on the page
             function displayBooks() {
@@ -86,13 +73,16 @@
                 });
             }
 
-            // Filter books by genre
+            // Filter books by genre or author name using search bar
             function filterBooks() {
-                const selectedGenre = filterGenre.value;
-                if (selectedGenre === '') {
-                    return books;
-                }
-                return books.filter(book => book.genre === selectedGenre);
+                const genreSearchTerm = searchGenre.value.toLowerCase();
+                const authorSearchTerm = searchAuthor.value.toLowerCase();
+                
+                return books.filter(book => {
+                    const genreMatch = genreSearchTerm === '' || book.genre.toLowerCase().includes(genreSearchTerm);
+                    const authorMatch = authorSearchTerm === '' || book.author.toLowerCase().includes(authorSearchTerm);
+                    return genreMatch && authorMatch;
+                });
             }
 
             // Sort books by title or author
@@ -170,7 +160,12 @@
             }
 
             // Event listeners for filtering, sorting, and pagination
-            filterGenre.addEventListener('change', () => {
+            searchGenre.addEventListener('input', () => {
+                currentPage = 1;
+                updatePagination();
+            });
+
+            searchAuthor.addEventListener('input', () => {
                 currentPage = 1;
                 updatePagination();
             });
